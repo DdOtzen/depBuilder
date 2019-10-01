@@ -1,0 +1,48 @@
+PROFIBUS DP; MCA; 101; MCA101
+DeviceNet; MCA; 104; MCA104
+CANopen; MCA; 105; MCA105
+AK-LonWorks; MCA; 107; MCA107
+LonWorks; MCA; 108;
+BACnet; MCA; 109; MCA109
+PROFIBUS Converter; MCA; 113; 
+PROFIBUS Converter; MCA; 114;  MCA114
+LonWorks Trane; MCA; 115; 
+BACnet TRANE; MCA; 116; 
+PROFINET; MCA; 120;  MCA120
+EtherNet/IP; MCA; 121;  MCA121
+Modbus TCP; MCA; 122;  MCA122
+POWERLINK; MCA; 123;  MCA123
+EtherCAT; MCA; 124;  MCA124
+BACNet /IP; MCA; 125;  MCA125
+DeviceNet Converter; MCA; 194;  MCA194
+Programmabel API; MCO; 301;  MCAB301
+General Purpose I/O; MCB; 101; MCB101
+Encoder Input; MCB; 102; MCB102
+Resolver Input; MCB; 103; MCB103
+Relay Card; MCB; 105; MCB105
+Safe PLC I/O; MCB; 108; 
+Analog I/O, RTC Back-up; MCB; 109; MCB109
+PTC Thermistor Card; MCB; 112; 
+Sensor Input; MCB; 114; MCB114
+Programmable I/O; MCB; 115; MCB115
+RTC Trane; MCB; 116; MCB116
+Intellikey Low Power; MCB; 120; 
+Intellikey highpower; MCB; 121; 
+Safety Option HTL; MCB; 150; MCB150
+Safety Option TTL; MCB; 151; 
+Safety Option PROFIsafe; MCB; 152; 
+Extended Cascade Controller; MCO; 101; MCO101
+AFC; MCO; 005; MCO105
+ECB; MCO; 104; MCO104
+Motion Control API Option; MCO; 302; MCO302
+Motion Control Option; MCO; 305; MCO305
+Synchronizing Controller; MCO; 350; MCO350
+Positioning Controller; MCO; 351; MCO351
+Salt Controller; MCO; 360; 
+Lift Controller; MCO; 361; 
+Programmable logic control; MCO; 301; MCO301
+Advanced Cascade Controller; MCO; 102; MCO102
+ECB; MCO; 104; MCO104
+Extended Relay Card; MCB; 113; MCB113
+24V Extern Supply; MCB; 107; 
+
