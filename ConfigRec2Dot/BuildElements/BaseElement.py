@@ -17,3 +17,13 @@ class BaseElement( object ):
 	
 	def addDependency(self, dep):
 			self.dependencies.add( dep )
+			
+	def getDeepDeps( self ):
+		diveList = []
+		for dep in self.dependencies:
+			if not dep.isFinal:
+				diveList.append( dep )
+		for dep in diveList:
+			self.dependencies.remove( dep )
+			self.dependencies.update( dep.getDeepDeps() )
+		return self.dependencies

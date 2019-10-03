@@ -1,94 +1,55 @@
 from BuildElements import Artifact
-from BuildElements import Source
-from BuildElements import DerivedObject
-from BuildElements import Product
+from BuildElements import Source, sQuiet
+from BuildElements import DerivedObject, quiet
+from BuildElements import BeDict
 
-# import BuildElements
-
-targets = dict()
-sources = dict()
-dObjects = dict()
-artifacts = dict()
+import ClearCaseCr as cr
+import sys
 
 
-def isDO( line ):
-	if line[:23] == 'derived object         ':
-		return True
-	else:
-		return False
+
+sources = BeDict()
+dObjects = BeDict()
+artifacts = BeDict()
 
 
-def isNewDO( line ):
-	if isViewPrivate( line ) and 'new derived object' in line:
-		return True
-	else:
-		return False
-
-
-def isVersion( line ):
-	if line[:23] == 'version                ':
-		return True
-	else:
-		return False
-
-
-def isDoVersion( line ):
-	if line[:23] == 'derived object version ':
-		return True
-	else:
-		return False
-
-		
-def isViewPrivate( line ):
-	if line[:23] == 'view private object    ':
-		return True
-	else:
-		return False
-
-
-def isTarget( line ):
-	if line[:7] == 'Target ':
-		return True
-	else:
-		return False
-
-
-def extractTargetName( line ):
-	fullName = line.split( ' ' )[1]
-	return fullName
-
-
-def UpdateSourceList( sourceId ):
-	global sources
-	if sourceId not in sources:
-		sources[sourceId] = Source( sourceId )
 
 
 def StartOfFile( line ):
 	global state
-	if isTarget( line ):
-		state = ReadingTarget
+	if cr.isTarget( line ):
+		state = ReadingFirstTarget
 
 
+def ReadingFirstTarget( line ):
+	if cr.isNewDO( line ):
+		art = Artifact( line )
+		if art.key not in artifacts:
+			artifacts[ art.key ] = art
+		else:
+			print( 'Primary Artifact repeated' )
+	ReadingTarget( line )
+
+				
 def ReadingTarget( line ):
 	global state
-	if isTarget( line ):
+	if cr.isTarget( line ):
 		state = PopulatingTarget
-	elif isVersion( line ):
+	elif cr.isVersion( line ):
 		if '[in makefile]' in line:
 			pass
 		else:
 			inLines.add( line )
-	elif isDO( line ):
+	elif cr.isDO( line ):
 		if 'new derived object' in line:
 			outLines.add( line )
 		elif 'referenced derived object' in line:
 			inLines.add( line )
 		else:
 			print( 'Error' )
-	elif isNewDO( line ):
+	elif cr.isNewDO( line ):
 		outLines.add( line )
-	elif isDoVersion( line ):
+	elif cr.isDoVersion( line ):
 		if 'referenced derived object' in line:
 			inLines.add( line )
 		else:
@@ -99,57 +60,36 @@ def PopulatingTarget( unused ):
 	global state
 	global inLines
 	global outLines
-# 	print( ' in:  ', len( inLines ) )
-# 	print( ' out: ', len( outLines ) )
 	
-	_usedDos = set()
-	_usedSources = set()
+	usedDos = set()
+	usedSources = set()
 	for line in inLines:
 		
-		if isDO( line ):
-			_do = DerivedObject( line )
-			# add to global list
-			if _do.key not in dObjects:
-				dObjects[ _do.key ] = _do
-			else:
-				_do = dObjects[ _do.key ]
-			# add to my local list
-			_usedDos.add( _do )
+		if cr.isDO( line ):
+			do = dObjects.Listify( DerivedObject( line ) )
+			usedDos.add( do )
 		
-		elif isVersion( line ):
-			_ver = Source( line )
-			# add to Global list
-			if _ver.key not in sources:
-				sources[ _ver.key ] = _ver
-			else:
-				_ver = sources[ _ver.key ]
-			_usedSources.add( _ver )
+		elif cr.isVersion( line ):
+			ver = sources.Listify( Source( line ) )
+			usedSources.add( ver )
 		
-		elif isDoVersion( line ):
-			_dov = Artifact( line )
-			if _dov.key not in artifacts:
-				artifacts[ _dov.key ] = _dov
-			else:
-				_dov = artifacts[ _dov.key ]
-			_usedDos.add( _dov )
+		elif cr.isDoVersion( line ):
+			dov = artifacts.Listify( Artifact( line ) )
+			usedDos.add( dov )
 		
 		else:
 			print( 'unhandled Line:', line )
 	
 	for line in outLines:
-		if isDO( line ) or isNewDO( line ):
-			_do = DerivedObject( line )
-			if _do.key not in dObjects:
-				dObjects[ _do.key ] = _do
-			else:
-				_do = dObjects[ _do.key ]
+		if cr.isNewDO( line ):
+			newDo = dObjects.Listify( DerivedObject( line ) )
 		else:
 			print( 'Error not a DO: "{}"'.format( line ) )
 			break
-		for _source in _usedSources:
-			_do.addDependency( _source )
-		for _doIn in _usedDos:
-			_do.addDependency( _doIn )
+		for source in usedSources:
+			newDo.addDependency( source )
+		for usedDo in usedDos:
+			newDo.addDependency( usedDo )
 
 	state = ReadingTarget
 	inLines = set()
@@ -161,18 +101,72 @@ inLines = set()
 outLines = set()
 	
 	
-def parse():
+def Parse():
 	with open( 't2.cr', 'r' ) as  listFile:
 		for line in listFile:
 			state( line.strip() )
+
+
+def LinkArtifacts():
+	for art in artifacts.values():
+		art.importDo( dObjects.pop( art.key ) )
 				
 
+def CountReferences( aDict ):
+	c = dict()
+	for o in aDict.values():
+		r = sys.getrefcount( o )
+		if r in c:
+			c[r] += 1
+		else:
+			c[r] = 1
+	for k in sorted( c.keys() ):
+		print( "{}: {}".format( k, c[k] ) )
+
+
 if __name__ == '__main__':
-	parse()
-	print( "found", len( targets ), "targets" )
-	print( "found", len( sources ), "sources" )
-	print( "found", len( dObjects ), "DO's" )
-	print( "found", len( artifacts ), "artifacts" )
-# 	for do in dObjects.values():
-# 		print( do.key )
-	print( [ d.key for d in dObjects['p400\\product\\FC30X\\generated\\DictionaryGerman.o'].dependencies ] )
+	Parse()
+# 	print( "found", len( sources ), "sources" )
+# 	print( "found", len( dObjects ), "DO's" )
+# 	print( "found", len( artifacts ), "artifacts" )
+	for key in artifacts.keys():
+		print( key )
+		if key in dObjects.keys():
+			print( '\tFound' )
+	LinkArtifacts()
+# 	print( "found", len( sources ), "sources" )
+# 	print( "found", len( dObjects ), "DO's" )
+# 	print( "found", len( artifacts ), "artifacts" )
+
+#	CountReferences( dObjects )
+	del( dObjects )
+# 	quiet.do = False
+	labels = set()
+	labelCount = 0
+	for bElens in [ artifacts, sources ]:
+		for bElen in bElens.values():
+			if bElen.label in labels:
+# 				print( 'Match found:', bElen.label )
+				labelCount += 1
+			else:
+				labels.add( bElen.label )
+	print( 'searched over {} labels. Found {} repeats'.format( len( labels ), labelCount ) )
+
+	sQuiet.do = False
+	del( sources )
+
+	for artifact in artifacts.values():
+		print( artifact.key )
+		print( 'before:', len( artifact.dependencies ) )
+		deps = artifact.getDeepDeps()
+		with open( artifact.label + '.dep', 'w' ) as  depFile :
+			print( artifact.fullname, file = depFile )
+			for dep in artifact.dependencies :
+				print( dep.fullname, file = depFile )
+		print( 'returned:', len( deps ) )
+		print( 'after:', len( artifact.dependencies ) )
+	
+	quiet.do = True
+	sQuiet.do = True
+	print( 'exit' )
+
