@@ -1,3 +1,12 @@
+# intermediate files
+*.png
+*.jpg
+recurlist.txt
+*.cr
+*.dot
+*.dep
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
