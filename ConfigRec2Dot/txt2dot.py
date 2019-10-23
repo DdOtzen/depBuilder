@@ -4,7 +4,7 @@ from BuildElements import DerivedObject, quiet
 from BuildElements import BeDict
 
 import ClearCaseCr as cr
-import sys
+import sys, os
 
 
 
@@ -101,8 +101,8 @@ inLines = set()
 outLines = set()
 	
 	
-def Parse():
-	with open( 't2.cr', 'r' ) as  listFile:
+def Parse( crFileName ):
+	with open( crFileName, 'r' ) as  listFile:
 		for line in listFile:
 			state( line.strip() )
 
@@ -123,34 +123,45 @@ def CountReferences( aDict ):
 	for k in sorted( c.keys() ):
 		print( "{}: {}".format( k, c[k] ) )
 
-
-if __name__ == '__main__':
-	Parse()
-# 	print( "found", len( sources ), "sources" )
-# 	print( "found", len( dObjects ), "DO's" )
-# 	print( "found", len( artifacts ), "artifacts" )
-	for key in artifacts.keys():
-		print( key )
-		if key in dObjects.keys():
-			print( '\tFound' )
-	LinkArtifacts()
-# 	print( "found", len( sources ), "sources" )
-# 	print( "found", len( dObjects ), "DO's" )
-# 	print( "found", len( artifacts ), "artifacts" )
-
-#	CountReferences( dObjects )
-	del( dObjects )
-# 	quiet.do = False
+def CountLabelRepeats() :
+	"""
+	Count repeated labels
+	Telling how many files in different paths, share the file name
+	"""
+	
 	labels = set()
 	labelCount = 0
 	for bElens in [ artifacts, sources ]:
 		for bElen in bElens.values():
 			if bElen.label in labels:
-# 				print( 'Match found:', bElen.label )
+				print( 'Match found:', bElen.label )
 				labelCount += 1
 			else:
 				labels.add( bElen.label )
 	print( 'searched over {} labels. Found {} repeats'.format( len( labels ), labelCount ) )
+
+if __name__ == '__main__':
+	for f in os.listdir( 'crs' ) :
+		print( 'parsing:', f)
+		Parse( os.path.join( 'crs', f ) )
+
+		print( 'looking for broken artifact objects')
+		for key in artifacts.keys():
+	# 		print( key )
+			if key not in dObjects.keys():
+				print( key, '\t Not Found' )
+
+	print( 'linking artifacts' )
+	LinkArtifacts()
+
+	print( "found", len( sources ), "sources" )
+	print( "found", len( dObjects ), "DO's" )
+	print( "found", len( artifacts ), "artifacts" )
+
+#	CountReferences( dObjects )
+	del( dObjects )
+# 	quiet.do = False
+
 
 	sQuiet.do = False
 	del( sources )
