@@ -1,23 +1,21 @@
 from BuildElements import Artifact
 from BuildElements import Source, sQuiet
-from BuildElements import DerivedObject, quiet
+from BuildElements import DerivedObject
 from BuildElements import BeDict
+from ArtifactStorage import ArtifactStorage
+import logging as log
 
 import ClearCaseCr as cr
 import sys, os
-
-
 
 sources = BeDict()
 dObjects = BeDict()
 artifacts = BeDict()
 
 
-
-
 def StartOfFile( line ):
 	global state
-	if cr.isTarget( line ):
+	if cr.isMvfsObjects( line ):
 		state = ReadingFirstTarget
 
 
@@ -25,33 +23,35 @@ def ReadingFirstTarget( line ):
 	if cr.isNewDO( line ):
 		art = Artifact( line )
 		if art.key not in artifacts:
-			artifacts[ art.key ] = art
+			if art.key[-4:] == '.bin' or art.key[-8:] == '.danfoss' :
+				artifacts[ art.key ] = art
+				log.debug( 'ArteFirst: %s', art.key )
 		else:
-			print( 'Primary Artifact repeated' )
+			log.info( '\t\tPrimary Artifact repeated', art.label )
 	ReadingTarget( line )
 
 				
 def ReadingTarget( line ):
 	global state
-	if cr.isTarget( line ):
+	if cr.isBuildScript( line ):
 		state = PopulatingTarget
 	elif cr.isVersion( line ):
 		if '[in makefile]' in line:
 			pass
 		else:
-			inLines.add( line )
+			inLines.addField( line )
 	elif cr.isDO( line ):
 		if 'new derived object' in line:
-			outLines.add( line )
+			outLines.addField( line )
 		elif 'referenced derived object' in line:
-			inLines.add( line )
+			inLines.addField( line )
 		else:
 			print( 'Error' )
 	elif cr.isNewDO( line ):
-		outLines.add( line )
+		outLines.addField( line )
 	elif cr.isDoVersion( line ):
 		if 'referenced derived object' in line:
-			inLines.add( line )
+			inLines.addField( line )
 		else:
 			print( 'Error a DOV that was not reerenced:', line )
 
@@ -67,15 +67,15 @@ def PopulatingTarget( unused ):
 		
 		if cr.isDO( line ):
 			do = dObjects.Listify( DerivedObject( line ) )
-			usedDos.add( do )
+			usedDos.addField( do )
 		
 		elif cr.isVersion( line ):
 			ver = sources.Listify( Source( line ) )
-			usedSources.add( ver )
+			usedSources.addField( ver )
 		
 		elif cr.isDoVersion( line ):
 			dov = artifacts.Listify( Artifact( line ) )
-			usedDos.add( dov )
+			usedDos.addField( dov )
 		
 		else:
 			print( 'unhandled Line:', line )
@@ -95,22 +95,19 @@ def PopulatingTarget( unused ):
 	inLines = set()
 	outLines = set()
 
-
 state = StartOfFile
 inLines = set()
 outLines = set()
 	
 	
 def Parse( crFileName ):
+	global state
 	with open( crFileName, 'r' ) as  listFile:
+		state = StartOfFile
 		for line in listFile:
 			state( line.strip() )
 
 
-def LinkArtifacts():
-	for art in artifacts.values():
-		art.importDo( dObjects.pop( art.key ) )
-				
 
 def CountReferences( aDict ):
 	c = dict()
@@ -122,6 +119,11 @@ def CountReferences( aDict ):
 			c[r] = 1
 	for k in sorted( c.keys() ):
 		print( "{}: {}".format( k, c[k] ) )
+
+
+
+
+
 
 def CountLabelRepeats() :
 	"""
@@ -137,47 +139,55 @@ def CountLabelRepeats() :
 				print( 'Match found:', bElen.label )
 				labelCount += 1
 			else:
-				labels.add( bElen.label )
+				labels.addField( bElen.label )
 	print( 'searched over {} labels. Found {} repeats'.format( len( labels ), labelCount ) )
 
 if __name__ == '__main__':
+	log.basicConfig( level = log.WARN )
+
 	for f in os.listdir( 'crs' ) :
+	#for f in [ 'AAF005.cr', 'AF600.cr' ] :
+	
 		print( 'parsing:', f)
 		Parse( os.path.join( 'crs', f ) )
-
-		print( 'looking for broken artifact objects')
+		Parse( os.path.join( 'crs', '@manualWoodoo.cr' ) )
+		
+		log.info( '\tlooking for broken artifact objects')
 		for key in artifacts.keys():
-	# 		print( key )
-			if key not in dObjects.keys():
-				print( key, '\t Not Found' )
+			# only empty artifacts must be tested
+			if len( artifacts[key].dependencies ) == 0 :
+				if key not in dObjects.keys():
+					print( key, '\t Not Found' )
+		
+		log.info( '\tlinking and colapsing dep tree %s', f )
+		for artifact in artifacts.values():
+			# Only empty artifacts must be populatewd.
+			if  artifact.key in dObjects :
+				artifact.importDo( dObjects.pop( artifact.key ) )
+				artifact.getDeepDeps()
 
-	print( 'linking artifacts' )
-	LinkArtifacts()
-
-	print( "found", len( sources ), "sources" )
-	print( "found", len( dObjects ), "DO's" )
-	print( "found", len( artifacts ), "artifacts" )
-
-#	CountReferences( dObjects )
-	del( dObjects )
-# 	quiet.do = False
-
+		if 'p400\service\moc\dsp_data.hpp' in artifacts :
+			dsp_data =  artifacts[ 'p400\service\moc\dsp_data.hpp' ]
+			for dep in dsp_data.dependencies :
+				if 'debug\dsp28_flash' in dep.key :
+					print( dep.key )  	
+		
+		log.info( '\tcleaning up %s', f )
+		del( dObjects )
+		dObjects = BeDict()
 
 	sQuiet.do = False
 	del( sources )
-
-	for artifact in artifacts.values():
-		print( artifact.key )
-		print( 'before:', len( artifact.dependencies ) )
-		deps = artifact.getDeepDeps()
-		with open( artifact.label + '.dep', 'w' ) as  depFile :
-			print( artifact.fullname, file = depFile )
-			for dep in artifact.dependencies :
-				print( dep.fullname, file = depFile )
-		print( 'returned:', len( deps ) )
-		print( 'after:', len( artifact.dependencies ) )
+	sources = BeDict()
+	sQuiet.do = True
 	
-	quiet.do = True
+	log.info( 'Store tree to file' )
+	artStore = ArtifactStorage()
+	artStore.Save( artifacts )
+
+	
+# 	for artifact in artifacts.values():
+# 		print( artifact.key )
+
 	sQuiet.do = True
 	print( 'exit' )
-

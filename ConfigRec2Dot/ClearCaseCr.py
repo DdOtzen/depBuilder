@@ -44,3 +44,15 @@ def isTarget( line ):
 		return True
 	else:
 		return False
+
+def isMvfsObjects( line ):
+	if line[:13] == 'MVFS objects:':
+		return True
+	else:
+		return False
+
+def isBuildScript( line ):
+	if line[:13] == 'Build Script:':
+		return True
+	else:
+		return False

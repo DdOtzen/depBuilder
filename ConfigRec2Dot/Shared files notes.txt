@@ -1,0 +1,100 @@
+p400\meta_hal\interface\sys_time_defines.h
+	Included by p400\service\dsp\dspTypes.h
+	Defines the GLOBAL_CLOCK_SCHEME enum, where A means old CC, B means new CC, the value is recieved from AOC as power data, read from eeprom
+	Suggest remove the enum all together as we only build for new CC (MK II), making this file obsolete.
+
+p400\service\communication\spiDefinition.h
+	Mostly defenitions used by either end of the SPI bus
+	Unused:
+		DAC_TYPE
+		EMPTY_TEL_TYPE (maybe reminence from old mco protocol)
+	Contains a extern variable decleration, this is not wise in shared header.
+
+p400\service\communication\spiService.h
+	False include.
+	Note:
+		on p400 there is also two versions of this file, the other located in 
+			p400/product/mco305/dsp/src/hal/cpu/tiC28/MCO/spiService.h
+			
+	
+p400\service\dsp\dspStatusTypes.h
+	Defenitions used in interface of both AOC-MOC and MOC-Option
+	Contains some extern variable declerations, that is not wise in shared header.
+	
+	
+p400\service\dsp\dspTypes.h
+	??? ./service/lcp/forms/AMARunning.cpp:103:   static U32 maxStep = 23; // AMAZE_STEP_MAX = 23
+	unused:
+		PWM_PATTERN_TYPE
+		TAS_ACTION_TYPE
+		POWER_LIMIT_TYPE
+		
+p400\service\dsp\FieldbusOverSpiDefines.h
+	Defenitions shared between AOC and MOC for setting up fieldbus over SPI communication.
+	
+p400\service\dsp\fifo.c
+p400\service\dsp\fifo.h
+	Shared util
+	note:
+		nios_application.bin used the header but not the source, smells like a false include.
+
+p400\service\dsp\serial.c
+p400\service\dsp\serial.h
+	Shared util
+	note:
+		nios_application.bin used the header but not the source, smells like a false include.
+
+p400\service\dsp\telegrams.h
+	unused:
+		AFC_POWERDATA_TELEGRAM_ID_TYPE
+		AFC_EXPANDED_TEL_ID_TYPE
+		
+p400\service\dsp\types1.h
+	Heavy canditae for a cleanup
+	Break dependencies, and get rid of fragile ifdefs structure, by just utilizing the compiler stdlib i.e. stdint.h
+	
+p400\service\execution\lock.h
+	Error in the config record parser:
+		This is included in serial.c, but only when build for AOC, as the build for AOC and Dsp is in the same cr, the current parser gets confused.
+		
+p400\service\globals\OptionNotificationErrorTypes.h
+	Common defines used in status from DSP to AOC
+	
+p400\service\globals\types.h
+	Used only by crc16.c and serial.c (both shared util)
+	It is hope, duct tape and shere luck that the typedefs in here is not different from types1.h
+	As mentioned before kandidate to a heavy cleanup.
+	
+p400\service\messagesystem\ModuleNames.h
+	Contains an extern variable decleration, this is not wise in shared header.
+	Unused:
+		noOfStandardCanLocations
+		noOfExtendedCanLocations
+		noOfCanLocations
+		olOptionE0 ( reminence of ABinC option, should be removed )
+		olOptionE1 ( reminence of ABinC option, should be removed )
+		extern OptionLocation olBroadcast
+		OptionTypes
+		OptionText
+	Limited use:
+		from ModuleNames only mnPressureSensor is used.
+		from OptionLocation only the following is used:
+			olOptionC2
+			olOptionA
+			olOptionB
+			olOptionC0
+			olOptionC1
+			noLocation
+			
+p400\service\util\crc16.c
+p400\service\util\crc16.h
+	Shared util
+	unused:
+		Crc16()
+		crc_16_update()
+		Crc16byte
+	Used:
+		rtu_crc16()
+	Note:
+		crc.c contain two const tables (arrays) of each 256 bytes (U16), neither is used by rtu_crc16().
+		So unless compiler can optimize them away they waste space.

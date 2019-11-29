@@ -6,7 +6,7 @@ class BaseElement( object ):
 	
 	def __init__(self, line ):
 		self.fullname = self.extractName( line )
-		self.key = self.fullname
+		self.key = self.fullname.lower()
 		self.label = self.fullname.rsplit('\\',1)[1]
 		
 		self.dependencies = set()
@@ -16,7 +16,7 @@ class BaseElement( object ):
 		return ''
 	
 	def addDependency(self, dep):
-			self.dependencies.add( dep )
+			self.dependencies.addField( dep )
 			
 	def getDeepDeps( self ):
 		diveList = []
