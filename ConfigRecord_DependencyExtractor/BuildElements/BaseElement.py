@@ -12,6 +12,7 @@ class BaseElement( object ):
 		self.dependencies = set()
 		
 	def extractName(self, line ):
+		del line
 		print( 'error extractName not implemented in: ', self.__class__ )
 		return ''
 	
