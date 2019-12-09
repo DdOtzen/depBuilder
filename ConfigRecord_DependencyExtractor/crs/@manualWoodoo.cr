@@ -54,3 +54,14 @@ Build Script:
     Maual woodoo
 ---------------------------- 
 
+----------------------------
+MVFS objects:
+----------------------------
+view private object    \export\p400\TESTMON_DSP\DSP_OPT_TESTMON_1_42\TESTMON_DSP_1_42.i00	           [new derived object]
+derived object         \p400\product\testmonitor\option\dsp\dsp_testmonitor\Debug\dsp_testmonitor.i00  [referenced derived object]
+----------------------------
+Build Script:
+----------------------------
+    Maual woodoo
+---------------------------- 
+

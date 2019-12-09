@@ -23,11 +23,11 @@ def ReadingFirstTarget( line ):
 	if cr.isNewDO( line ):
 		art = Artifact( line )
 		if art.key not in artifacts:
-			if art.key[-4:] == '.bin' or art.key[-8:] == '.danfoss' :
+			if art.key[-4:] == '.bin' or art.key[-4:] == '.i00' or art.key[-8:] == '.danfoss' :
 				artifacts[ art.key ] = art
 				log.debug( 'ArteFirst: %s', art.key )
 		else:
-			log.info( '\t\tPrimary Artifact repeated', art.label )
+			log.info( '\t\tPrimary Artifact repeated %s', art.label )
 	ReadingTarget( line )
 
 				
@@ -39,19 +39,19 @@ def ReadingTarget( line ):
 		if '[in makefile]' in line:
 			pass
 		else:
-			inLines.addField( line )
+			inLines.add( line )
 	elif cr.isDO( line ):
 		if 'new derived object' in line:
-			outLines.addField( line )
+			outLines.add( line )
 		elif 'referenced derived object' in line:
-			inLines.addField( line )
+			inLines.add( line )
 		else:
 			print( 'Error' )
 	elif cr.isNewDO( line ):
-		outLines.addField( line )
+		outLines.add( line )
 	elif cr.isDoVersion( line ):
 		if 'referenced derived object' in line:
-			inLines.addField( line )
+			inLines.add( line )
 		else:
 			print( 'Error a DOV that was not reerenced:', line )
 
@@ -67,15 +67,17 @@ def PopulatingTarget( unused ):
 		
 		if cr.isDO( line ):
 			do = dObjects.Listify( DerivedObject( line ) )
-			usedDos.addField( do )
+			usedDos.add( do )
 		
 		elif cr.isVersion( line ):
 			ver = sources.Listify( Source( line ) )
-			usedSources.addField( ver )
+			usedSources.add( ver )
 		
 		elif cr.isDoVersion( line ):
 			dov = artifacts.Listify( Artifact( line ) )
-			usedDos.addField( dov )
+			log.debug( 'Added ArteFact: %s', dov.key )
+
+			usedDos.add( dov )
 		
 		else:
 			print( 'unhandled Line:', line )
@@ -100,10 +102,14 @@ inLines = set()
 outLines = set()
 	
 	
-def Parse( crFileName ):
+def Parse( crFileName, isManualWodoo=False ):
 	global state
 	with open( crFileName, 'r' ) as  listFile:
-		state = StartOfFile
+		if isManualWodoo :
+			state = ReadingTarget
+		else :
+			state = StartOfFile
+		
 		for line in listFile:
 			state( line.strip() )
 
@@ -139,25 +145,29 @@ def CountLabelRepeats() :
 				print( 'Match found:', bElen.label )
 				labelCount += 1
 			else:
-				labels.addField( bElen.label )
+				labels.add( bElen.label )
 	print( 'searched over {} labels. Found {} repeats'.format( len( labels ), labelCount ) )
 
-if __name__ == '__main__':
-	log.basicConfig( level = log.WARN )
+def ParseCRs() :
+	global dObjects
+	global sources
+	
+	log.basicConfig( level = log.DEBUG )
 
 	for f in os.listdir( 'crs' ) :
-	#for f in [ 'AAF005.cr', 'AF600.cr' ] :
-	
-		print( 'parsing:', f)
+	#for f in [ 'MCB102.cr' ] :
+		if f == '@manualWoodoo.cr' : continue
+		
+		log.info( 'parsing: %s', f)
 		Parse( os.path.join( 'crs', f ) )
-		Parse( os.path.join( 'crs', '@manualWoodoo.cr' ) )
+		Parse( os.path.join( 'crs', '@manualWoodoo.cr' ), isManualWodoo=True )
 		
 		log.info( '\tlooking for broken artifact objects')
 		for key in artifacts.keys():
 			# only empty artifacts must be tested
 			if len( artifacts[key].dependencies ) == 0 :
 				if key not in dObjects.keys():
-					print( key, '\t Not Found' )
+					log.warning( '\t Artifact %s Not Found in derived obejcts', key )
 		
 		log.info( '\tlinking and colapsing dep tree %s', f )
 		for artifact in artifacts.values():
@@ -166,11 +176,11 @@ if __name__ == '__main__':
 				artifact.importDo( dObjects.pop( artifact.key ) )
 				artifact.getDeepDeps()
 
-		if 'p400\service\moc\dsp_data.hpp' in artifacts :
-			dsp_data =  artifacts[ 'p400\service\moc\dsp_data.hpp' ]
-			for dep in dsp_data.dependencies :
-				if 'debug\dsp28_flash' in dep.key :
-					print( dep.key )  	
+# 		if 'p400\service\moc\dsp_data.hpp' in artifacts :
+# 			dsp_data =  artifacts[ 'p400\service\moc\dsp_data.hpp' ]
+# 			for dep in dsp_data.dependencies :
+# 				if 'debug\dsp28_flash' in dep.key :
+# 					print( dep.key )  	
 		
 		log.info( '\tcleaning up %s', f )
 		del( dObjects )
@@ -179,8 +189,7 @@ if __name__ == '__main__':
 	sQuiet.do = False
 	del( sources )
 	sources = BeDict()
-	sQuiet.do = True
-	
+
 	log.info( 'Store tree to file' )
 	artStore = ArtifactStorage()
 	artStore.Save( artifacts )
@@ -191,3 +200,6 @@ if __name__ == '__main__':
 
 	sQuiet.do = True
 	print( 'exit' )
+
+if __name__ == '__main__':
+	ParseCRs()

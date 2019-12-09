@@ -64,7 +64,7 @@ def MakeLine( file, artefacts ):
 def GetVob( fullName ):
 	return fullName.split('\\',1)[0]
 
-def main():
+def makeDspReport():
 	aStore = ArtifactStorage()
 	
 	artefacts = aStore.Fetch() 
@@ -82,4 +82,4 @@ def main():
 			csvFile.write( '\n' )
 
 if __name__ == '__main__':
-	main()
+	makeDspReport()

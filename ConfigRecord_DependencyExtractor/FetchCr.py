@@ -1,6 +1,7 @@
 import os
 
 from products import products
+from MySytemRunner import run
 
 def NeedUpdate( source, target ):
 	if os.path.exists( target ) and os.path.getctime( source ) < os.path.getctime( target ) :
@@ -8,21 +9,21 @@ def NeedUpdate( source, target ):
 	else :
 		return True
 
-if __name__ == '__main__':
+def FetchCrs():
 	crDIr = 'crs'
 	if not os.path.isdir( crDIr ) :
 		os.mkdir( crDIr )
-	os.system( 'cleartool mount \\P422_MCO302' )
-	os.system( 'cleartool mount \\p400' )
-	os.system( 'cleartool mount \\p400_dsp' )
-	os.system( 'cleartool mount \\tools' )
-	os.system( 'cleartool mount \\pl_models' )
-	os.system( 'cleartool mount \\ecos' )
-	os.system( 'cleartool mount \\export' )
-	os.system( 'cleartool mount \\pfpd' )
-	os.system( 'cleartool mount \\pnio_dk' )
-	os.system( 'cleartool mount \\fpga' )
-	os.system( 'cleartool mount \\bacnetStack' )
+	run( 'cleartool mount \\P422_MCO302' )
+	run( 'cleartool mount \\p400' )
+	run( 'cleartool mount \\p400_dsp' )
+	run( 'cleartool mount \\tools' )
+	run( 'cleartool mount \\pl_models' )
+	run( 'cleartool mount \\ecos' )
+	run( 'cleartool mount \\export' )
+	run( 'cleartool mount \\pfpd' )
+	run( 'cleartool mount \\pnio_dk' )
+	run( 'cleartool mount \\fpga' )
+	run( 'cleartool mount \\bacnetStack' )
 	
 	for p in products :
 		doPathName = os.path.join('M:\mao__cr_extract', products[ p ] )
@@ -31,7 +32,7 @@ if __name__ == '__main__':
 			if NeedUpdate( doPathName, crPathName ) : 
 				cmd = 'cleartool catcr -recurse -ci -type fl -long ' + doPathName + ' > '  + crPathName
 				#print( cmd )
-				exitCode = os.system( cmd )
+				exitCode = run( cmd )
 				if exitCode > 0 :
 					os.remove( crPathName )
 					print( 'ERROR:', crPathName )
@@ -43,4 +44,6 @@ if __name__ == '__main__':
 		else :
 			print( "WARNING Can't find:", doPathName )
 			
-		
+
+if __name__ == '__main__':
+	FetchCrs()
