@@ -9,7 +9,7 @@ def NeedUpdate( source, target ):
 	else :
 		return True
 
-def FetchCrs():
+def FetchCrs( forceUpdate = False ):
 	crDIr = 'crs'
 	if not os.path.isdir( crDIr ) :
 		os.mkdir( crDIr )
@@ -29,7 +29,7 @@ def FetchCrs():
 		doPathName = os.path.join('M:\mao__cr_extract', products[ p ] )
 		crPathName = os.path.join( crDIr, p + '.cr' )
 		if os.path.exists( doPathName ) :
-			if NeedUpdate( doPathName, crPathName ) : 
+			if NeedUpdate( doPathName, crPathName ) or forceUpdate : 
 				cmd = 'cleartool catcr -recurse -ci -type fl -long ' + doPathName + ' > '  + crPathName
 				#print( cmd )
 				exitCode = run( cmd )

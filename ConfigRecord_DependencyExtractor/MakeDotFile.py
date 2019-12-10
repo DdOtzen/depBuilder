@@ -53,8 +53,12 @@ def GetArtTypeOptions( label ):
 
 
 
-def MakeDotFile( arts ):
-	with open( 'allDeps.dot', 'w' ) as  depFile :
+def MakeDotFile( fileName ):
+	aStore = ArtifactStorage()
+	arts = aStore.Fetch() 
+	for a in arts.values() :
+		GetArtTypeOptions( a.label )
+	with open( fileName, 'w' ) as  depFile :
 		depFile.write( 'digraph FC302 {\n' )
 
 		elemList = set()
@@ -62,7 +66,7 @@ def MakeDotFile( arts ):
 			depFile.write('{} [label="{}" type="art" {}];\n'.format( art.key.replace( '\\', '.').replace('-','_') , art.label, GetArtTypeOptions( art.label ) ) )
 			for dep in art.dependencies :
 				if dep not in elemList :
-					elemList.addField( dep )
+					elemList.add( dep )
 
 		for element in elemList :
 			if element not in arts.values() :
@@ -78,9 +82,5 @@ def MakeDotFile( arts ):
 
 
 if __name__ == '__main__':
-	aStore = ArtifactStorage()
-	artifacts = aStore.Fetch() 
-	for a in artifacts.values() :
-		GetArtTypeOptions( a.label )
-	MakeDotFile( artifacts )
+	MakeDotFile( 'allDeps.dot' )
 	

@@ -1,13 +1,15 @@
 from ArtifactStorage import ArtifactStorage
 
 
-def MakeCvsTable( arts, fileName ):
+def MakeCvsTable( fileName ):
+	aStore = ArtifactStorage()
+	arts = aStore.Fetch() 
 	with open( fileName, 'w' ) as  csvFile :
 		elemList = set()
 		for art in arts.values() :
 			for dep in art.dependencies :
 				if dep not in elemList :
-					elemList.addField( dep )
+					elemList.add( dep )
 		print( 'elems found', len(elemList))
 		
 		headerLine = 'Artifacts'
@@ -30,8 +32,4 @@ def MakeCvsTable( arts, fileName ):
 
 
 if __name__ == '__main__':
-	aStore = ArtifactStorage()
-	
-	artifacts = aStore.Fetch() 
-	
-	MakeCvsTable( artifacts, 'dd.csv' )
+	MakeCvsTable('dd.csv')

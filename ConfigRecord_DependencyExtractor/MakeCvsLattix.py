@@ -2,15 +2,15 @@ from ArtifactStorage import ArtifactStorage
 from BuildElements import Artifact
 
 
-def MakeCvsLattix():
+def MakeCvsLattix( fileName ):
 	aStore = ArtifactStorage()
-	artifacts = aStore.Fetch() 
+	arts = aStore.Fetch() 
 	with open( fileName, 'w' ) as  csvFile :
 		sourceList = set()
 		for art in arts.values() :
 			for dep in art.dependencies :
 				if type( dep ) is not Artifact :
-					sourceList.addField( dep )
+					sourceList.add( dep )
 		print( 'sources found', len(sourceList))
 		
 		colList = list( arts.values() )
@@ -43,4 +43,4 @@ def MakeCvsLattix():
 			csvFile.write( line )
 
 if __name__ == '__main__':
-	MakeCvsLattix()
+	MakeCvsLattix( 'lattix.csv' )

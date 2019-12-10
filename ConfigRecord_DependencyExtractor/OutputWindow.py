@@ -4,40 +4,57 @@ import PySimpleGUI as sg
 
 class stdOutputWrapper():
 		
-	def __init__(self, passTrough=None):
+	def __init__(self, passTrough=None, printCallback = None, updateCallback = None ):
 		self.passTrough = passTrough
-		self.activeGui = False
+		self.guiPrint = printCallback
+		self.updateCB = updateCallback
+		self.wrapperActive = False
+	
+	def SetUpdateCallback(self, callback ) :
+		self.updateCB = callback
 
 	def ActivateGui(self):
-		self.activeGui = True
+		self.wrapperActive = True
 
 	def DeactivateGui(self):
-		self.activeGui = False
+		self.wrapperActive = False
 
 	def write(self, text ):
 		if self.passTrough is not None :
 			self.passTrough.write( text)
-		if self.activeGui :
-			self.GuiPrint( text )
+
+		if self.wrapperActive :
+			if self.guiPrint is not None :
+				self.guiPrint( text )
+			if self.updateCB is not None :
+				self.updateCB()
 
 	def flush(self):
 		if self.passTrough is not None :
 			self.passTrough.flush()
-		if self.activeGui :
-			outputWindow.window.Read( timeout = 0 )
-
-
-
-class stdinWrapper( stdOutputWrapper ):
 		
-	def GuiPrint( self, text ):
-		outputWindow.Print( text )
+		if self.wrapperActive :
+			if self.updateCB is not None :
+				self.updateCB()
 
-class stderrWrapper( stdOutputWrapper ):
-
-	def GuiPrint( self, text ):
-		outputWindow.PrintErr( text )
 	
+class EmbeddedOutputWindow( sg.Multiline ):
+	
+	def Print( self, text ):
+		"""
+		:param text: text to be inserted in window
+		"""
+		self.Widget.tag_config( "stdin", foreground = 'black' )
+		self.Widget.insert( 'end', text, "stdin" )
+		self.Update( append=True ) # Needed to make autoscroll work
+
+	def PrintErr( self, text ):
+		"""
+		:param text: text to be inserted in window
+		"""
+		self.Widget.tag_config( "stderr", foreground = 'red' )
+		self.Widget.insert( 'end', text, "stderr" )
+		self.Update( append=True ) # Needed to make autoscroll work
 	
 	
 class OutputWindow():
@@ -93,7 +110,7 @@ class OutputWindow():
 			self.__init__( size = self.size, location = self.location, font = self.font, no_titlebar = self.no_titlebar,
 						  no_button = self.no_button, grab_anywhere = self.grab_anywhere, keep_on_top = self.keep_on_top )
 		
-		event, values = self.window.Read( timeout = 0 )
+		event, _ = self.window.Read( timeout = 0 )
 		
 		if event == 'Quit' or event is None:
 			self.Close()
@@ -127,4 +144,4 @@ class OutputWindow():
 		self.window = None
 
 
-outputWindow = OutputWindow()
+#outputWindow = OutputWindow()
