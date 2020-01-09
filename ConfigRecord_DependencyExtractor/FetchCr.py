@@ -1,7 +1,7 @@
 import os
 
-from products import products
 from MySytemRunner import run
+from DDproducts import products
 
 def NeedUpdate( source, target ):
 	if os.path.exists( target ) and os.path.getctime( source ) < os.path.getctime( target ) :

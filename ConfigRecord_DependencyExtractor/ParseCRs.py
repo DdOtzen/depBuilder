@@ -152,7 +152,7 @@ def ParseCRs() :
 	global dObjects
 	global sources
 	
-	log.basicConfig( level = log.DEBUG )
+	log.basicConfig( level = log.INFO )
 
 	for f in os.listdir( 'crs' ) :
 	#for f in [ 'MCB102.cr' ] :

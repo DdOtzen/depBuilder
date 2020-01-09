@@ -1,6 +1,5 @@
 import sys
 import PySimpleGUI as sg
-from products import products
 from OutputWindow import EmbeddedOutputWindow, stdOutputWrapper
 
 from FetchCr import FetchCrs
@@ -9,6 +8,7 @@ from MakeCvsLattix import MakeCvsLattix
 from MakeCvsTable import MakeCvsTable
 from MakeDotFile import MakeDotFile
 from Report_dsp import makeDspReport
+from DDproducts import products
 
 sg.change_look_and_feel( 'Dark2' )
 
@@ -65,12 +65,12 @@ sys.stdout = stdOutputWrapper( sys.stdout, outTextField.Print, PassiveUpdate )
 sys.stderr = stdOutputWrapper( sys.stderr, outTextField.PrintErr, PassiveUpdate )
 
 
-def ActivateOutputWindow():
+def StartStdoutputCapture():
 	sys.stdout.ActivateGui()
 	sys.stderr.ActivateGui()
 
 
-def DeacivateOutputWindow():
+def EndStdoutputCapture():
 	sys.stdout.DeactivateGui()
 	sys.stderr.DeactivateGui()
 
@@ -80,29 +80,35 @@ while True:
 	if event in ( None, 'Exit' ):  # if user closes window or clicks cancel
 		break
 	elif event == 'fetchBtn' :
-		ActivateOutputWindow()
+		StartStdoutputCapture()
 		FetchCrs( values[ 'forceFetch' ] )
-		DeacivateOutputWindow()
+		print( "Done" )
+		EndStdoutputCapture()
 	elif event == 'parseBtn' :
-		ActivateOutputWindow()
+		StartStdoutputCapture()
 		ParseCRs()
-		DeacivateOutputWindow()
+		print( "Done" )
+		EndStdoutputCapture()
 	elif event == 'makeLattix' :
-		ActivateOutputWindow()
+		StartStdoutputCapture()
 		MakeCvsLattix( values[ 'pathLattix' ] )
-		DeacivateOutputWindow()
+		print( "Done" )
+		EndStdoutputCapture()
 	elif event == 'makeMatrix' :
-		ActivateOutputWindow()
+		StartStdoutputCapture()
 		MakeCvsTable( values['pathMatrix'] )
-		DeacivateOutputWindow()
+		print( "Done" )
+		EndStdoutputCapture()
 	elif event == 'makeReport' :
-		ActivateOutputWindow()
+		StartStdoutputCapture()
 		makeDspReport( values[ 'pathRepport' ] )
-		DeacivateOutputWindow()
+		print( "Done" )
+		EndStdoutputCapture()
 	elif event == 'makeDotfile' :
-		ActivateOutputWindow()
+		StartStdoutputCapture()
 		MakeDotFile( values[ 'pathDotfile' ] )
-		DeacivateOutputWindow()
+		print( "Done" )
+		EndStdoutputCapture()
 	else :
 		print( event, values )
 
